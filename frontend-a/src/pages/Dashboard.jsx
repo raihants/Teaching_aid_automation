@@ -6,6 +6,7 @@ import ImgArmRobot from "../assets/Robot Images/Arm Robot.png"
 import ImgAGV from "../assets/Robot Images/AGV.png"
 import ImgConveyor2 from "../assets/Robot Images/Conveyor 2.png"
 import ImgDeltaRobot from "../assets/Robot Images/Delta Robot.png"
+import OEEChart from "../components/OEEChart"
 
 export default function Dashboard() {
 
@@ -16,25 +17,61 @@ export default function Dashboard() {
     workcenters: {}
   })
 
+  const [showOEEChart, setShowOEEChart] = useState(false)
+
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:8000/ws")
+    const ws = new WebSocket("ws://127.0.0.1:8000/ws")
+
+    ws.onopen = () => {
+      console.log("WebSocket CONNECTED")
+    }
+
+    ws.onerror = (err) => {
+      console.error("WebSocket ERROR", err)
+    }
 
     ws.onmessage = (event) => {
-      const data = JSON.parse(event.data)
-      setProduction(data)   // langsung replace full state
+      try {
+        const data = JSON.parse(event.data)
+        setProduction(data)
+      } catch (err) {
+        console.error("Failed to parse WebSocket message", err)
+      }
     }
 
     ws.onclose = () => {
-      console.log("WebSocket disconnected")
+      console.log("WebSocket CLOSED")
     }
 
-    return () => ws.close()
-  }, [])
+  return () => ws.close()
+}, [])
 
-  const oee =
-    production.total > 0
-      ? ((production.ok / production.total) * 100).toFixed(1) + "%"
-      : "--"
+  const calculateOEE = () => {
+    const total = production.total || 0
+    const ok = production.ok || 0
+    const workcenters = production.workcenters || {}
+    const wcList = Object.values(workcenters)
+
+    if (wcList.length === 0) return "--"
+
+    const quality = total > 0 ? (ok / total) : 0
+
+    const runningCount = wcList.filter(wc => wc.status === "RUNNING").length
+    const availability = runningCount / wcList.length
+
+    const idealCycle = 8
+    const avgCycle =
+      wcList.reduce((sum, wc) => sum + (wc.cycle || 0), 0) / wcList.length
+
+    const performance =
+      avgCycle > 0 ? Math.min((idealCycle / avgCycle), 1) : 0
+
+    const oee = availability * performance * quality * 100
+
+    return oee.toFixed(1) + "%"
+  }
+
+  const oee = calculateOEE()
 
   const getWcStatus = (searchName) => {
     const entry = Object.entries(production.workcenters).find(
@@ -54,21 +91,24 @@ export default function Dashboard() {
       <div className="grid grid-cols-4 gap-6 mb-8">
         <OEECard title="Production Today" value={production.total} />
         <OEECard title="Reject Today" value={production.ng} />
-        <OEECard title="OEE" value={oee} />
-        <OEECard
-          title="Active Workcenter"
-          value={Object.keys(production.workcenters).length}
-        />
+        <OEECard title="OEE" value={oee} onClick={() => setShowOEEChart(prev => !prev)}/>
+        <OEECard title="Active Workcenter" value={Object.keys(production.workcenters).length} />
       </div>
 
+      {showOEEChart && (
+        <div className="mt-8 mb-10 bg-white p-6 rounded-2xl shadow-sm transition-all duration-300 min-h-[350px]">
+          <OEEChart production={production} />
+        </div>
+      )}
+
       {/* Workcenters */}
-      <div className="grid grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-3 gap-6 mb-8 mt-6">
         {Object.entries(production.workcenters).map(([name, wc]) => (
           <WorkcenterCard
             key={name}
             name={name}
             status={wc.status}
-            cycle={`${wc.cycle_time}s`}
+            cycle={`${wc.cycle}s`}
             ok={wc.ok}
             ng={wc.ng}
           />
@@ -83,35 +123,35 @@ export default function Dashboard() {
         <ProcessImage
           name="Conveyor 1"
           src={ImgConveyor1}
-          status={getWcStatus("conveyor1") || getWcStatus("conveyor 1")}
+          status={getWcStatus("Conveyor1") || getWcStatus("Conveyor 1")}
         />
         <div className="text-gray-300 w-8 h-8 flex-shrink-0 animate-pulse">➔</div>
 
         <ProcessImage
           name="Arm Robot"
           src={ImgArmRobot}
-          status={getWcStatus("arm robot") || getWcStatus("robot arm")}
+          status={getWcStatus("ArmRobot") || getWcStatus("Arm Robot")}
         />
         <div className="text-gray-300 w-8 h-8 flex-shrink-0 animate-pulse">➔</div>
 
         <ProcessImage
           name="AGV Mobile"
           src={ImgAGV}
-          status={getWcStatus("agv mobile") || getWcStatus("agv")}
+          status={getWcStatus("AGV") || getWcStatus("AGV")}
         />
         <div className="text-gray-300 w-8 h-8 flex-shrink-0 animate-pulse">➔</div>
 
         <ProcessImage
           name="Conveyor 2"
           src={ImgConveyor2}
-          status={getWcStatus("conveyor2") || getWcStatus("conveyor 2")}
+          status={getWcStatus("Conveyor2") || getWcStatus("Conveyor 2")}
         />
         <div className="text-gray-300 w-8 h-8 flex-shrink-0 animate-pulse">➔</div>
 
         <ProcessImage
           name="Robot Delta"
           src={ImgDeltaRobot}
-          status={getWcStatus("robot delta") || getWcStatus("delta robot")}
+          status={getWcStatus("Delta") || getWcStatus("delta")}
         />
       </div>
 

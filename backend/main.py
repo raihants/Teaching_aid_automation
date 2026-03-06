@@ -1,15 +1,15 @@
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 import asyncio
 import json
 import paho.mqtt.client as mqtt
 
 app = FastAPI()
 
-connected_clients = []
+# =========================
+# GLOBAL STATE
+# =========================
 
-# =========================
-# PRODUCTION STATE
-# =========================
+connected_clients = []
 
 production_state = {
     "total": 0,
@@ -27,11 +27,19 @@ PORT = 1883
 
 mqtt_client = mqtt.Client()
 
+# IMPORTANT:
+# Gunakan event loop yang benar (thread-safe)
+main_loop = asyncio.get_event_loop()
+
+
 def on_connect(client, userdata, flags, rc):
     print("Connected to MQTT")
     client.subscribe("mes/#")
 
+
 def on_message(client, userdata, msg):
+    global production_state
+
     payload = json.loads(msg.payload.decode())
     topic = msg.topic
 
@@ -41,7 +49,6 @@ def on_message(client, userdata, msg):
 
         wc = payload.get("workcenter")
 
-        # Buat workcenter kalau belum ada
         if wc not in production_state["workcenters"]:
             production_state["workcenters"][wc] = {
                 "status": "IDLE",
@@ -59,26 +66,32 @@ def on_message(client, userdata, msg):
 
             if payload.get("result") == "ok":
                 production_state["workcenters"][wc]["ok"] += 1
-
             elif payload.get("result") == "ng":
                 production_state["workcenters"][wc]["ng"] += 1
-                
-            if "Conveyor1" in production_state["workcenters"]:
-                conveyor = production_state["workcenters"]["Conveyor1"]
-                production_state["total"] = conveyor["ok"] + conveyor["ng"]
-                
-                production_state["ok"] = conveyor["ok"]
-                production_state["ng"] = conveyor["ng"]
-                
-            else:
-                production_state["total"] = 0
 
-    asyncio.run(broadcast_state())
+        # Update total berdasarkan Conveyor1
+        conveyor = production_state["workcenters"].get("Conveyor1")
+        if conveyor:
+            production_state["total"] = conveyor["ok"] + conveyor["ng"]
+            production_state["ok"] = conveyor["ok"]
+            production_state["ng"] = conveyor["ng"]
+
+    # 🔥 SAFE BROADCAST FROM THREAD
+    asyncio.run_coroutine_threadsafe(broadcast_state(), main_loop)
+
 
 mqtt_client.on_connect = on_connect
 mqtt_client.on_message = on_message
 mqtt_client.connect(BROKER, PORT, 60)
 mqtt_client.loop_start()
+
+# =========================
+# ROUTES
+# =========================
+
+@app.get("/")
+def root():
+    return {"status": "backend running"}
 
 # =========================
 # WEBSOCKET
@@ -88,21 +101,19 @@ mqtt_client.loop_start()
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     connected_clients.append(websocket)
+    print("WebSocket connected")
 
     try:
         while True:
-            await asyncio.sleep(1)
-    except:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        print("WebSocket disconnected")
         connected_clients.remove(websocket)
 
-async def broadcast_state():
-    disconnected = []
 
-    for client in connected_clients:
+async def broadcast_state():
+    for client in connected_clients.copy():
         try:
             await client.send_text(json.dumps(production_state))
         except:
-            disconnected.append(client)
-
-    for client in disconnected:
-        connected_clients.remove(client)
+            connected_clients.remove(client)

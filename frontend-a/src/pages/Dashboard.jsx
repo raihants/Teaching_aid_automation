@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react"
 import WorkcenterCard from "../components/WorkcenterCard"
 import OEECard from "../components/OEECard"
-import ImgConveyor1 from "../assets/Robot Images/Conveyor 1.png"
-import ImgArmRobot from "../assets/Robot Images/Arm Robot.png"
+import ImgConveyor1 from "../assets/Robot Images/Conveyor1.png"
+import ImgArmRobot from "../assets/Robot Images/ArmRobot.png"
 import ImgAGV from "../assets/Robot Images/AGV.png"
-import ImgConveyor2 from "../assets/Robot Images/Conveyor 2.png"
-import ImgDeltaRobot from "../assets/Robot Images/Delta Robot.png"
+import ImgConveyor2 from "../assets/Robot Images/Conveyor2.png"
+import ImgDeltaRobot from "../assets/Robot Images/DeltaRobot.png"
 import OEEChart from "../components/OEEChart"
 
 export default function Dashboard() {
@@ -142,7 +142,7 @@ export default function Dashboard() {
         <div className="text-gray-300 w-8 h-8 flex-shrink-0 animate-pulse">➔</div>
 
         <ProcessImage
-          name="Conveyor 2"
+          name="Conveyor2"
           src={ImgConveyor2}
           status={getWcStatus("Conveyor2") || getWcStatus("Conveyor 2")}
         />

@@ -1,4 +1,4 @@
-export default function OEECard({ title, value, onClick }) {
+export default function KPICard({ title, value, onClick }) {
   return (
     <div onClick={onClick} className="bg-white rounded-2xl shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow">
       <p className="text-gray-500 text-sm">{title}</p>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import WorkcenterCard from "../components/WorkcenterCard"
-import OEECard from "../components/OEECard"
+import KPICard from "../components/KPICard"
 import ImgConveyor1 from "../assets/Robot Images/Conveyor1.png"
 import ImgArmRobot from "../assets/Robot Images/ArmRobot.png"
 import ImgAGV from "../assets/Robot Images/AGV.png"
@@ -89,10 +89,10 @@ export default function Dashboard() {
 
       {/* KPI */}
       <div className="grid grid-cols-4 gap-6 mb-8">
-        <OEECard title="Production Today" value={production.total} />
-        <OEECard title="Reject Today" value={production.ng} />
-        <OEECard title="OEE" value={oee} onClick={() => setShowOEEChart(prev => !prev)}/>
-        <OEECard title="Active Workcenter" value={Object.keys(production.workcenters).length} />
+        <KPICard title="Production Today" value={production.total} />
+        <KPICard title="Reject Today" value={production.ng} />
+        <KPICard title="OEE" value={oee} onClick={() => setShowOEEChart(prev => !prev)}/>
+        <KPICard title="Active Workcenter" value={Object.keys(production.workcenters).length} />
       </div>
 
       {showOEEChart && (

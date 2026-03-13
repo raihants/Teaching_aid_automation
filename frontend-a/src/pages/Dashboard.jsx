@@ -43,35 +43,12 @@ export default function Dashboard() {
       console.log("WebSocket CLOSED")
     }
 
+    console.log("Current production state:", production)
+
   return () => ws.close()
-}, [])
+  }, [])
 
-  const calculateOEE = () => {
-    const total = production.total || 0
-    const ok = production.ok || 0
-    const workcenters = production.workcenters || {}
-    const wcList = Object.values(workcenters)
-
-    if (wcList.length === 0) return "--"
-
-    const quality = total > 0 ? (ok / total) : 0
-
-    const runningCount = wcList.filter(wc => wc.status === "RUNNING").length
-    const availability = runningCount / wcList.length
-
-    const idealCycle = 8
-    const avgCycle =
-      wcList.reduce((sum, wc) => sum + (wc.cycle || 0), 0) / wcList.length
-
-    const performance =
-      avgCycle > 0 ? Math.min((idealCycle / avgCycle), 1) : 0
-
-    const oee = availability * performance * quality * 100
-
-    return oee.toFixed(1) + "%"
-  }
-
-  const oee = calculateOEE()
+  const oee = production.oee ? production.oee.oee : 0 + "%"
 
   const getWcStatus = (searchName) => {
     const entry = Object.entries(production.workcenters).find(

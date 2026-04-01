@@ -7,6 +7,7 @@ import ImgAGV from "../assets/Robot Images/AGV.png"
 import ImgConveyor2 from "../assets/Robot Images/Conveyor2.png"
 import ImgDeltaRobot from "../assets/Robot Images/DeltaRobot.png"
 import OEEChart from "../components/OEEChart"
+import ProgressBar from "../components/ProgressBar";
 
 export default function Dashboard() {
 
@@ -69,7 +70,13 @@ export default function Dashboard() {
       <h1 className="text-3xl font-semibold text-gray-800 mb-6">
         Production Dashboard
       </h1>
-
+     <div className="bg-white p-6 rounded-2xl shadow-sm mb-8">
+       <ProgressBar
+        value={1625}
+        target={2000}
+        label="Collected"
+      />
+      </div>
       {/* KPI */}
       <div className="grid grid-cols-4 gap-6 mb-8">
         <KPICard title="Production Today" value={production.total} />

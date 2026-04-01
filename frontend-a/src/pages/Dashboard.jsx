@@ -19,6 +19,8 @@ export default function Dashboard() {
 
   const [showOEEChart, setShowOEEChart] = useState(false)
 
+  const workcenters = production.workcenters || {}
+
   useEffect(() => {
     const ws = new WebSocket("ws://127.0.0.1:8000/ws")
 
@@ -31,6 +33,8 @@ export default function Dashboard() {
     }
 
     ws.onmessage = (event) => {
+      console.log("RAW:", event.data)
+
       try {
         const data = JSON.parse(event.data)
         setProduction(data)
@@ -43,19 +47,21 @@ export default function Dashboard() {
       console.log("WebSocket CLOSED")
     }
 
-    console.log("Current production state:", production)
-
   return () => ws.close()
   }, [])
 
-  const oee = production.oee ? production.oee.oee : 0 + "%"
+  const oee = production.oee ? production.oee.oee + "%" : "0%"
 
   const getWcStatus = (searchName) => {
-    const entry = Object.entries(production.workcenters).find(
+    const wc = Object.entries(workcenters).find(
       ([key]) => key.toLowerCase() === searchName.toLowerCase()
     )
-    return entry ? entry[1].status : "IDLE"
+    return wc ? wc[1].status : "IDLE"
   }
+
+  useEffect(() => {
+    console.log("UPDATED:", production)
+    }, [production])
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
@@ -69,7 +75,7 @@ export default function Dashboard() {
         <KPICard title="Production Today" value={production.total} />
         <KPICard title="Reject Today" value={production.ng} />
         <KPICard title="OEE" value={oee} onClick={() => setShowOEEChart(prev => !prev)}/>
-        <KPICard title="Active Workcenter" value={Object.keys(production.workcenters).length} />
+        <KPICard title="Active Workcenter" value={Object.keys(workcenters).length} />
       </div>
 
       {showOEEChart && (
@@ -80,7 +86,7 @@ export default function Dashboard() {
 
       {/* Workcenters */}
       <div className="grid grid-cols-3 gap-6 mb-8 mt-6">
-        {Object.entries(production.workcenters).map(([name, wc]) => (
+        {Object.entries(workcenters).map(([name, wc]) => (
           <WorkcenterCard
             key={name}
             name={name}

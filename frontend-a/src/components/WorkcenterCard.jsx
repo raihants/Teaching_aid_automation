@@ -23,7 +23,6 @@ export default function WorkcenterCard({ name, status, cycle, ok, ng }) {
       <div className="space-y-2 text-gray-600">
         <p>Cycle Time: <span className="font-medium">{cycle}</span></p>
         <p>OK: <span className="text-green-600 font-medium">{ok}</span></p>
-        <p>Reject: <span className="text-red-500 font-medium">{ng}</span></p>
       </div>
 
     </div>

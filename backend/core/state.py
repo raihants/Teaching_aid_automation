@@ -4,7 +4,9 @@ production_state = {
     "ng": 0,
     "workcenters": {},
     "oee": {},
-    "oee_wc": {}
+    "oee_wc": {}, 
+    "target": 0,
+    "progress": 0
 }
 
 production_target = 0

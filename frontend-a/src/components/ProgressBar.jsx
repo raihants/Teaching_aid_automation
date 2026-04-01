@@ -8,7 +8,7 @@ const ProgressBar = ({ value, target, label }) => {
       
       {/* Value */}
       <div style={{ fontSize: "24px", fontWeight: "600", color: "#333" }}>
-        {value.toLocaleString()} Target Produksi
+        {value.toLocaleString()} Pcs Collected
       </div>
 
       {/* Progress Bar */}
@@ -41,7 +41,7 @@ const ProgressBar = ({ value, target, label }) => {
         }}
       >
         <b>{percentage}%</b> {label} &nbsp;&nbsp;
-        {target.toLocaleString()} EGP Target
+        {target.toLocaleString()} Pcs Target
       </div>
     </div>
   );

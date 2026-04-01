@@ -71,12 +71,12 @@ export default function Dashboard() {
         Production Dashboard
       </h1>
       
-     <div className="bg-white p-6 rounded-2xl shadow-sm mb-8">
-       <ProgressBar
-        value={1625}
-        target={2000}
-        label="Collected"
-      />
+      <div className="bg-white p-6 rounded-2xl shadow-sm mb-8">
+        <ProgressBar
+          value={production.progress || 0}
+          target={production.target || 0}
+          label="Collected"
+        />
       </div>
 
       {/* KPI */}

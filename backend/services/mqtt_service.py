@@ -52,9 +52,11 @@ def on_message(client, userdata, msg):
             production_state["total"] = conveyor["ok"] + conveyor["ng"]
             production_state["ok"] = conveyor["ok"]
             production_state["ng"] = conveyor["ng"]
+            
     calculate_oee()
     
     if topic == "mes/product":
+        
         if payload.get("status") == "complete":
 
             if payload.get("result") == "ok":
@@ -70,6 +72,9 @@ def on_message(client, userdata, msg):
                 print("🎯 Target reached → closing MO")
 
                 state.odoo.mark_mo_done(state.current_mo_id)
+                
+    production_state["target"] = state.production_target
+    production_state["progress"] = state.produced_count
 
     asyncio.run_coroutine_threadsafe(manager.broadcast(production_state), main_loop)
     

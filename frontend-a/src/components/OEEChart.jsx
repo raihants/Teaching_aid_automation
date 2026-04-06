@@ -76,7 +76,7 @@ export default function OEEChart({ production }) {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4">Live OEE</h2>
+      <h2 className="text-gray-500 text-xl font-semibold mb-4">Live OEE</h2>
       <ResponsiveContainer width="100%" height={300}>
         <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />
@@ -91,7 +91,7 @@ export default function OEEChart({ production }) {
         </BarChart>
       </ResponsiveContainer>
 
-      <h2 className="text-xl font-semibold mt-10 mb-4">OEE per Station</h2>
+      <h2 className="text-gray-500 text-xl font-semibold mt-10 mb-4">OEE per Station</h2>
       <ResponsiveContainer width="100%" height={300}>
         <BarChart data={wcData}>
           <CartesianGrid strokeDasharray="3 3" />

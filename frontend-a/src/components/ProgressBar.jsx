@@ -1,7 +1,7 @@
 import React from "react";
 
 const ProgressBar = ({ value, target, label }) => {
-  const percentage = Math.round((value / target) * 100);
+  const percentage = target > 0 ? Math.round((value / target) * 100) : 0;
 
   return (
     <div style={{ width: "100%" }}>

@@ -8,8 +8,11 @@ import ImgConveyor2 from "../assets/Robot Images/Conveyor2.png"
 import ImgDeltaRobot from "../assets/Robot Images/DeltaRobot.png"
 import OEEChart from "../components/OEEChart"
 import ProgressBar from "../components/ProgressBar";
+import toast, { Toaster } from "react-hot-toast"
 
 export default function Dashboard() {
+  
+  const [targetReached, setTargetReached] = useState(false)
 
   const [production, setProduction] = useState({
     total: 0,
@@ -48,8 +51,33 @@ export default function Dashboard() {
       console.log("WebSocket CLOSED")
     }
 
-  return () => ws.close()
+    return () => {
+      ws.close()
+    }
   }, [])
+
+  useEffect(() => {
+    if (
+      production.target > 0 &&
+      production.progress >= production.target &&
+      !targetReached
+    ) {
+      toast.success("🎯 Target production achieved!", {
+        duration: 4000,
+        style: {
+          background: "#023881",
+          color: "#ffffff",
+          fontWeight: "600"
+        }
+      })
+
+      setTargetReached(true)
+    }
+  }, [production.progress, production.target, targetReached])
+
+  useEffect(() => {
+    setTargetReached(false)
+  }, [production.target])
 
   const oee = production.oee ? production.oee.oee + "%" : "0%"
 
@@ -65,13 +93,24 @@ export default function Dashboard() {
     }, [production])
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <div className="min-h-screen bg-[#f4f7fb] p-6">
 
-      <h1 className="text-3xl font-semibold text-gray-800 mb-6">
-        Production Dashboard
+      <Toaster position="top-right" />
+
+      <h1 className="text-3xl font-bold text-[#023881] mb-6 tracking-wide">
+        PRODUCTION DASHBOARD
       </h1>
-      
-      <div className="bg-white p-6 rounded-2xl shadow-sm mb-8">
+
+      {production.progress >= production.target && production.target > 0 && (
+        <div className="mb-6 bg-[#023881] text-white px-6 py-4 rounded-xl shadow-md flex items-center justify-between animate-pulse">
+          <span className="font-semibold tracking-wide">
+            🎯 TARGET PRODUCTION ACHIEVED
+          </span>
+        </div>
+      )}
+
+       {/* Progress Bar */}
+      <div className="bg-white border border-[#e3e8f0] p-6 rounded-2xl shadow-sm mb-8">
         <ProgressBar
           value={production.progress || 0}
           target={production.target || 0}
@@ -117,28 +156,28 @@ export default function Dashboard() {
           src={ImgConveyor1}
           status={getWcStatus("Conveyor1") || getWcStatus("Conveyor 1")}
         />
-        <div className="text-gray-300 w-8 h-8 flex-shrink-0 animate-pulse">➔</div>
+        <div className="text-gray-300 text-xl w-8 h-8 flex-shrink-0 animate-pulse">➔</div>
 
         <ProcessImage
           name="Arm Robot"
           src={ImgArmRobot}
           status={getWcStatus("ArmRobot") || getWcStatus("Arm Robot")}
         />
-        <div className="text-gray-300 w-8 h-8 flex-shrink-0 animate-pulse">➔</div>
+        <div className="text-[#023881]/30 text-xl w-8 h-8 flex-shrink-0 animate-pulse">➔</div>
 
         <ProcessImage
           name="AGV Mobile"
           src={ImgAGV}
           status={getWcStatus("AGV") || getWcStatus("AGV")}
         />
-        <div className="text-gray-300 w-8 h-8 flex-shrink-0 animate-pulse">➔</div>
+        <div className="text-[#023881]/30 text-xl w-8 h-8 flex-shrink-0 animate-pulse">➔</div>
 
         <ProcessImage
           name="Conveyor2"
           src={ImgConveyor2}
           status={getWcStatus("Conveyor2") || getWcStatus("Conveyor 2")}
         />
-        <div className="text-gray-300 w-8 h-8 flex-shrink-0 animate-pulse">➔</div>
+        <div className="text-[#023881]/30 text-xl w-8 h-8 flex-shrink-0 animate-pulse">➔</div>
 
         <ProcessImage
           name="Robot Delta"

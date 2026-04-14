@@ -1,17 +1,34 @@
 import asyncio
+import os
 import threading
 import time
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
 from core import state
-from config import *
+from dotenv import load_dotenv
 
 from routes.api import router
 from ws.ws_manager import manager
 from services.mqtt_service import start_mqtt, publish
 from services.odoo_service import OdooService
 
+load_dotenv()
+
+ODOO_URL = os.getenv("ODOO_URL")
+ODOO_DB = os.getenv("ODOO_DB")
+ODOO_USERNAME = os.getenv("ODOO_USERNAME")
+ODOO_PASSWORD = os.getenv("ODOO_PASSWORD")
+
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 🔥 sementara bebas (dev)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(router)
 
@@ -31,7 +48,6 @@ async def websocket_endpoint(websocket: WebSocket):
         manager.disconnect(websocket)
 
 def odoo_listener():
-
     while True:
         mo = state.odoo.get_active_mo()
 

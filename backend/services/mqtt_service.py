@@ -2,13 +2,18 @@ import json
 import asyncio
 import paho.mqtt.client as mqtt
 
+from services.db_service import insert_mqtt_log, insert_production
 from core import state
 from core.state import *
 from services.oee_service import calculate_oee
 from ws.ws_manager import manager
+from dotenv import load_dotenv
+import os
 
-BROKER = "localhost"
-PORT = 1883
+load_dotenv()
+
+BROKER = os.getenv("MQTT_BROKER")
+PORT = int(os.getenv("MQTT_PORT"))
 
 mqtt_client = mqtt.Client()
 main_loop = asyncio.get_event_loop()
@@ -21,9 +26,14 @@ def on_message(client, userdata, msg):
     payload = json.loads(msg.payload.decode())
     topic = msg.topic
     
-    print(f"MQTT Received: {topic} -> {payload}")
+    # print(f"MQTT Received: {topic} -> {payload}")
     
     if topic.startswith('mes/wc/'):
+        
+        try:
+            insert_mqtt_log(topic, payload)
+        except Exception as e:
+            print("❌ DB Log Error:", e)
         
         wc = payload.get("workcenter")
         
@@ -46,8 +56,9 @@ def on_message(client, userdata, msg):
                 production_state["workcenters"][wc]["ok"] += 1
             elif payload.get("result") == "ng":
                 production_state["workcenters"][wc]["ng"] += 1
-                
+    
         conveyor = production_state["workcenters"].get("Conveyor1")
+        
         if conveyor:
             production_state["total"] = conveyor["ok"] + conveyor["ng"]
             production_state["ok"] = conveyor["ok"]
@@ -58,6 +69,11 @@ def on_message(client, userdata, msg):
     if topic == "mes/product":
         
         if payload.get("status") == "complete":
+            
+            try:
+                insert_production(payload, state.current_mo_id)
+            except Exception as e:
+                print("❌ Insert Production Error:", e)
 
             if payload.get("result") == "ok":
                 state.produced_count += 1

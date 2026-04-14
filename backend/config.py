@@ -1,6 +1,0 @@
-# ODOO_URL = "http://10.133.127.37:8069"
-ODOO_URL = "http://localhost:8069"
-ODOO_DB = "demo_teaching_aid"
-# ODOO_USERNAME = "fahdliman.classroom@gmail.com"
-ODOO_USERNAME = "polman@gmail.com"
-ODOO_PASSWORD = "polman123"

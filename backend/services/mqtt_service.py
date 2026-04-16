@@ -72,6 +72,7 @@ def on_message(client, userdata, msg):
             
             try:
                 insert_production(payload, state.current_mo_id)
+                print(payload)
             except Exception as e:
                 print("❌ Insert Production Error:", e)
 

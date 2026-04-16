@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 import os
 import threading
 import time
@@ -60,6 +61,10 @@ def odoo_listener():
 
             publish("mes/target", {"target": state.production_target})
             publish("mes/control", {"command": "start"})
+            
+            state.start_time = datetime.now()
+            print("⏱️ Timer Started", state.start_time)
+            
 
         time.sleep(5)
         

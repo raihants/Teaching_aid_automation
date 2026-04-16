@@ -1,4 +1,4 @@
-from services.db_service import get_history
+from services.db_service import get_history, get_production_history
 from fastapi import APIRouter
 
 router = APIRouter()
@@ -10,6 +10,14 @@ def root():
 @router.get("/history")
 def history(workcenter: str = None, limit: int = 50):
     data = get_history(workcenter, limit)
+    return {
+        "status": "success",
+        "data": data
+    }
+    
+@router.get("/production_history")
+def production_history(mo_id: str = None, limit: int = 50):
+    data = get_production_history(mo_id, limit)
     return {
         "status": "success",
         "data": data

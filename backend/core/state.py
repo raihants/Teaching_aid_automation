@@ -14,5 +14,8 @@ produced_count = 0
 ok_count = 0
 ng_count = 0
 
+start_time = None
+end_time = None
+
 current_mo_id = None
 odoo = None

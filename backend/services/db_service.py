@@ -1,5 +1,6 @@
 import psycopg2
 from dotenv import load_dotenv
+from core import state
 import os
 from datetime import datetime
 
@@ -29,18 +30,19 @@ def insert_production(data, mo_id):
         timestamp = data.get("timestamp")
 
         if timestamp:
-            timestamp = datetime.fromisoformat(timestamp)
+            state.end_time = datetime.fromisoformat(timestamp)
         else:
-            timestamp = datetime.now()
+            state.end_time = datetime.now()
             
         cursor.execute("""
-            INSERT INTO production_history (product_id, mo_id, result, end_time)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO production_history (product_id, mo_id, result, start_time, end_time)
+            VALUES (%s, %s, %s, %s, %s)
         """, (
             data.get("product_id"),
             mo_id,
             data.get("result"),
-            timestamp
+            state.start_time,
+            state.end_time
         ))
         conn.commit()
     
@@ -94,18 +96,18 @@ def get_history(workcenter=None, limit=50):
 
     if workcenter:
         query = """
-            SELECT product_id, workcenter, status, result, cycle_time, timestamp
+            SELECT id, product_id, workcenter, status, result, cycle_time, timestamp
             FROM workcenter_log
             WHERE workcenter = %s
-            ORDER BY timestamp DESC
+            ORDER BY timestamp DESC, id DESC
             LIMIT %s
         """
         cursor.execute(query, (workcenter, limit))
     else:
         query = """
-            SELECT product_id, workcenter, status, result, cycle_time, timestamp
+            SELECT id,product_id, workcenter, status, result, cycle_time, timestamp
             FROM workcenter_log
-            ORDER BY timestamp DESC
+            ORDER BY timestamp DESC, id DESC
             LIMIT %s
         """
         cursor.execute(query, (limit,))
@@ -119,12 +121,51 @@ def get_history(workcenter=None, limit=50):
     result = []
     for row in rows:
         result.append({
+            "product_id": row[1],
+            "workcenter": row[2],
+            "status": row[3],
+            "result": row[4],
+            "cycle_time": row[5],
+            "timestamp": row[6].isoformat() if row[6] else None
+        })
+
+    return result
+
+def get_production_history(mo_id=None, limit=50):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    if mo_id:
+        query = """
+            SELECT product_id, mo_id, result, start_time, end_time
+            FROM production_history
+            WHERE mo_id = %s
+            ORDER BY end_time DESC
+            LIMIT %s
+        """
+        cursor.execute(query, (mo_id, limit))
+    else:
+        query = """
+            SELECT product_id, mo_id, result, start_time, end_time
+            FROM production_history
+            ORDER BY end_time DESC
+            LIMIT %s
+        """
+        cursor.execute(query, (limit,))
+
+    rows = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    result = []
+    for row in rows:
+        result.append({
             "product_id": row[0],
-            "workcenter": row[1],
-            "status": row[2],
-            "result": row[3],
-            "cycle_time": row[4],
-            "timestamp": row[5].isoformat() if row[5] else None
+            "mo_id": row[1],
+            "result": row[2],
+            "start_time": row[3].isoformat() if row[3] else None,
+            "end_time": row[4].isoformat() if row[4] else None
         })
 
     return result

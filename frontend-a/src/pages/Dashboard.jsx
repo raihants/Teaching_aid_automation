@@ -26,7 +26,7 @@ export default function Dashboard() {
   const workcenters = production.workcenters || {}
 
   useEffect(() => {
-    const ws = new WebSocket("ws://127.0.0.1:8000/ws")
+    const ws = new WebSocket("ws://172.16.26.11:8000/ws")
 
     ws.onopen = () => {
       console.log("WebSocket CONNECTED")

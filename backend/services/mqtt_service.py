@@ -36,6 +36,11 @@ def on_message(client, userdata, msg):
     
     if topic.startswith('mes/wc/'):
         
+        if payload["status"] == "start" and wc == "Conveyor1":
+            if state.start_time is None:
+                state.start_time = datetime.now()
+                print("⏱️ REAL Production Start:", state.start_time)
+        
         try:
             insert_mqtt_log(topic, payload)
         except Exception as e:

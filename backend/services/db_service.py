@@ -27,12 +27,7 @@ def insert_production(data, mo_id):
     cursor = conn.cursor()
     
     try :
-        timestamp = data.get("timestamp")
-
-        if timestamp:
-            state.end_time = datetime.fromisoformat(timestamp)
-        else:
-            state.end_time = datetime.now()
+        state.end_time = datetime.fromisoformat(data["timestamp"])
             
         cursor.execute("""
             INSERT INTO production_history (product_id, mo_id, result, start_time, end_time)
@@ -60,12 +55,7 @@ def insert_mqtt_log(topic, payload):
     cursor = conn.cursor()
     
     try:
-        timestamp = payload.get("timestamp")
-
-        if timestamp:
-            timestamp = datetime.fromisoformat(timestamp)
-        else:
-            timestamp = datetime.now()
+        timestamp = datetime.fromisoformat(payload["timestamp"])
         
         cursor.execute("""
             INSERT INTO workcenter_log 

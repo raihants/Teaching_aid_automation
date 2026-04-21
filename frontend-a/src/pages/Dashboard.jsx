@@ -11,6 +11,8 @@ import ProgressBar from "../components/ProgressBar";
 import toast, { Toaster } from "react-hot-toast"
 
 export default function Dashboard() {
+
+  const host = import.meta.env.VITE_BACK_HOST
   
   const [targetReached, setTargetReached] = useState(false)
 
@@ -26,7 +28,8 @@ export default function Dashboard() {
   const workcenters = production.workcenters || {}
 
   useEffect(() => {
-    const ws = new WebSocket("ws://172.16.26.11:8000/ws")
+    
+    const ws = new WebSocket(`ws://${host}:8000/ws`)
 
     ws.onopen = () => {
       console.log("WebSocket CONNECTED")

@@ -9,12 +9,13 @@ export default function History() {
 
   const [loadingLog, setLoadingLog] = useState(false)
   const [loadingProd, setLoadingProd] = useState(false)
+  const host = import.meta.env.VITE_BACK_HOST
 
   // ================= FETCH LOG =================
   const fetchLog = () => {
     setLoadingLog(true)
 
-    fetch(`http://172.16.26.11:8000/history?limit=${logLimit}`)
+    fetch(`http://${host}:8000/history?limit=${logLimit}`)
       .then(res => res.json())
       .then(res => setLogData(res.data))
       .catch(err => console.error("❌ Log Error:", err))
@@ -25,7 +26,7 @@ export default function History() {
   const fetchProd = () => {
     setLoadingProd(true)
 
-    fetch(`http://172.16.26.11:8000/production_history?limit=${prodLimit}`)
+    fetch(`http://${host}:8000/production_history?limit=${prodLimit}`)
       .then(res => res.json())
       .then(res => setProdData(res.data))
       .catch(err => console.error("❌ Production Error:", err))

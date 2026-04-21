@@ -8,6 +8,7 @@ from core.state import *
 from services.oee_service import calculate_oee
 from ws.ws_manager import manager
 from dotenv import load_dotenv
+from datetime import datetime
 import os
 
 load_dotenv()
@@ -25,6 +26,11 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
     payload = json.loads(msg.payload.decode())
     topic = msg.topic
+    
+    server_time = datetime.now()
+
+    # inject ke payload
+    payload["timestamp"] = server_time.isoformat()
     
     # print(f"MQTT Received: {topic} -> {payload}")
     

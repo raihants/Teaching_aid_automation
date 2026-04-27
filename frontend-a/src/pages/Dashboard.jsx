@@ -7,14 +7,14 @@ import ImgAGV from "../assets/Robot Images/AGV.png"
 import ImgConveyor2 from "../assets/Robot Images/Conveyor2.png"
 import ImgDeltaRobot from "../assets/Robot Images/DeltaRobot.png"
 import OEEChart from "../components/OEEChart"
-import ProgressBar from "../components/ProgressBar";
+import ProgressBar from "../components/ProgressBar"
 import toast, { Toaster } from "react-hot-toast"
 
 export default function Dashboard() {
-
   const host = import.meta.env.VITE_BACK_HOST
-  
+
   const [targetReached, setTargetReached] = useState(false)
+  const [showOEEChart, setShowOEEChart] = useState(false)
 
   const [production, setProduction] = useState({
     total: 0,
@@ -23,66 +23,40 @@ export default function Dashboard() {
     workcenters: {}
   })
 
-  const [showOEEChart, setShowOEEChart] = useState(false)
-
   const workcenters = production.workcenters || {}
 
+  /* ---------- WebSocket ---------- */
   useEffect(() => {
-    
     const ws = new WebSocket(`ws://${host}:8000/ws`)
-
-    ws.onopen = () => {
-      console.log("WebSocket CONNECTED")
-    }
-
-    ws.onerror = (err) => {
-      console.error("WebSocket ERROR", err)
-    }
-
+    ws.onopen  = () => console.log("WebSocket CONNECTED")
+    ws.onerror = (err) => console.error("WebSocket ERROR", err)
+    ws.onclose = () => console.log("WebSocket CLOSED")
     ws.onmessage = (event) => {
-      console.log("RAW:", event.data)
-
-      try {
-        const data = JSON.parse(event.data)
-        setProduction(data)
-      } catch (err) {
-        console.error("Failed to parse WebSocket message", err)
-      }
+      try { setProduction(JSON.parse(event.data)) }
+      catch (err) { console.error("Failed to parse WebSocket message", err) }
     }
-
-    ws.onclose = () => {
-      console.log("WebSocket CLOSED")
-    }
-
-    return () => {
-      ws.close()
-    }
+    return () => ws.close()
   }, [])
 
+  /* ---------- Target toast ---------- */
   useEffect(() => {
-    if (
-      production.target > 0 &&
-      production.progress >= production.target &&
-      !targetReached
-    ) {
+    if (production.target > 0 && production.progress >= production.target && !targetReached) {
       toast.success("🎯 Target production achieved!", {
         duration: 4000,
-        style: {
-          background: "#023881",
-          color: "#ffffff",
-          fontWeight: "600"
-        }
+        style: { background: "#001f51", color: "#fff", fontWeight: "600" }
       })
-
       setTargetReached(true)
     }
   }, [production.progress, production.target, targetReached])
 
-  useEffect(() => {
-    setTargetReached(false)
-  }, [production.target])
+  useEffect(() => { setTargetReached(false) }, [production.target])
 
-  const oee = production.oee ? production.oee.oee + "%" : "0%"
+  /* ---------- Derived values ---------- */
+  const oeeVal   = production.oee ? production.oee.oee : null
+  const availWc  = Object.keys(workcenters).length
+  const defectRate = production.total > 0
+    ? ((production.ng / production.total) * 100).toFixed(1)
+    : "0.0"
 
   const getWcStatus = (searchName) => {
     const wc = Object.entries(workcenters).find(
@@ -91,29 +65,44 @@ export default function Dashboard() {
     return wc ? wc[1].status : "IDLE"
   }
 
-  useEffect(() => {
-    console.log("UPDATED:", production)
-    }, [production])
+  /* ---------- Flow stations ---------- */
+  const flowStations = [
+    { name: "Conveyor 1",  src: ImgConveyor1,  statusKey: ["Conveyor1", "Conveyor 1"] },
+    { name: "Arm Robot",   src: ImgArmRobot,   statusKey: ["ArmRobot", "Arm Robot"] },
+    { name: "AGV Mobile",  src: ImgAGV,        statusKey: ["AGV"] },
+    { name: "Conveyor 2",  src: ImgConveyor2,  statusKey: ["Conveyor2", "Conveyor 2"] },
+    { name: "Robot Delta", src: ImgDeltaRobot, statusKey: ["Delta", "delta"] },
+  ]
 
   return (
-    <div className="min-h-screen bg-[#f4f7fb] p-6">
-
+    <div className="p-4 sm:p-6 lg:p-8 bg-background min-h-full animate-fadeIn">
       <Toaster position="top-right" />
 
-      <h1 className="text-3xl font-bold text-[#023881] mb-6 tracking-wide">
-        PRODUCTION DASHBOARD
-      </h1>
+      {/* ── Page Header ── */}
+      <div className="flex justify-between items-end mb-8">
+        <div>
+          <h2 className="text-headline-xl font-bold text-primary tracking-tight">Assembly Line A</h2>
+          <p className="text-on-surface-variant mt-1 text-sm">Real-time production metrics and component flow tracking.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-[11px] uppercase tracking-widest font-semibold text-on-surface-variant">Status</span>
+          <div className="bg-surface-container-low border border-outline-variant px-3 py-1.5 rounded-full flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-secondary animate-pulse-dot" />
+            <span className="text-[11px] uppercase tracking-widest font-bold text-primary">Optimal</span>
+          </div>
+        </div>
+      </div>
 
+      {/* ── Target Banner ── */}
       {production.progress >= production.target && production.target > 0 && (
-        <div className="mb-6 bg-[#023881] text-white px-6 py-4 rounded-xl shadow-md flex items-center justify-between animate-pulse">
-          <span className="font-semibold tracking-wide">
-            🎯 TARGET PRODUCTION ACHIEVED
-          </span>
+        <div className="mb-6 bg-primary-container text-on-primary px-6 py-4 rounded-xl flex items-center gap-3 animate-fadeIn">
+          <span className="material-symbols-outlined text-on-primary-container text-[22px]">emoji_events</span>
+          <span className="font-semibold tracking-wide text-on-primary">🎯 TARGET PRODUCTION ACHIEVED</span>
         </div>
       )}
 
-       {/* Progress Bar */}
-      <div className="bg-white border border-[#e3e8f0] p-6 rounded-2xl shadow-sm mb-8">
+      {/* ── Progress Bar ── */}
+      <div className="bg-white border border-outline-variant rounded-xl p-6 mb-6">
         <ProgressBar
           value={production.progress || 0}
           target={production.target || 0}
@@ -121,107 +110,154 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* KPI */}
-      <div className="grid grid-cols-4 gap-6 mb-8">
-        <KPICard title="Production Today" value={production.total} />
-        <KPICard title="Reject Today" value={production.ng} />
-        <KPICard title="OEE" value={oee} onClick={() => setShowOEEChart(prev => !prev)}/>
-        <KPICard title="Active Workcenter" value={Object.keys(workcenters).length} />
+      {/* ── KPI Cards ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6 mb-6">
+        <KPICard
+          title="Production Today"
+          value={production.total}
+          icon="inventory"
+          trend="up"
+          trendLabel={`+${production.ok ?? 0} OK units`}
+        />
+        <KPICard
+          title="Overall Equipment Effectiveness"
+          value={oeeVal !== null ? oeeVal : "—"}
+          unit={oeeVal !== null ? "%" : ""}
+          icon="query_stats"
+          trend={oeeVal !== null ? (oeeVal >= 85 ? "up" : "down") : null}
+          trendLabel={oeeVal !== null ? (oeeVal >= 85 ? "Above target" : "Below target") : null}
+          highlight
+          onClick={() => setShowOEEChart(prev => !prev)}
+        />
+        <KPICard
+          title="Good Units"
+          value={production.ok}
+          unit="units"
+          icon="check_circle"
+          trend="up"
+          trendLabel="OK output"
+        />
+        <KPICard
+          title="Defect Rate"
+          value={defectRate}
+          unit="%"
+          icon="gpp_maybe"
+          trend={parseFloat(defectRate) > 2 ? "down" : "up"}
+          trendLabel={`${production.ng ?? 0} rejects today`}
+        />
+        <KPICard
+          title="Active Workcenters"
+          value={availWc}
+          icon="hub"
+          trendLabel={`${availWc} stations online`}
+        />
       </div>
 
+      {/* ── OEE Chart (toggle) ── */}
       {showOEEChart && (
-        <div className="mt-8 mb-10 bg-white p-6 rounded-2xl shadow-sm transition-all duration-300 min-h-[350px]">
+        <div className="bg-white border border-outline-variant rounded-xl p-6 mb-6 animate-fadeIn">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-base font-bold text-primary">OEE Breakdown</h3>
+            <button
+              onClick={() => setShowOEEChart(false)}
+              className="p-1.5 text-on-surface-variant hover:bg-surface-container rounded-lg transition-colors"
+            >
+              <span className="material-symbols-outlined text-[18px]">close</span>
+            </button>
+          </div>
           <OEEChart production={production} />
         </div>
       )}
 
-      {/* Workcenters */}
-      <div className="grid grid-cols-3 gap-6 mb-8 mt-6">
-        {Object.entries(workcenters).map(([name, wc]) => (
-          <WorkcenterCard
-            key={name}
-            name={name}
-            status={wc.status}
-            cycle={`${wc.cycle}s`}
-            ok={wc.ok}
-            ng={wc.ng}
-          />
-        ))}
+      {/* ── Workcenter Cards ── */}
+      {availWc > 0 && (
+        <div className="mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-base font-bold text-primary uppercase tracking-wide">Workcenters</h3>
+            <span className="text-[11px] text-on-surface-variant uppercase tracking-wider font-semibold">{availWc} active</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
+            {Object.entries(workcenters).map(([name, wc]) => (
+              <WorkcenterCard
+                key={name}
+                name={name}
+                status={wc.status}
+                cycle={`${wc.cycle}s`}
+                ok={wc.ok}
+                ng={wc.ng}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Live Production Flow ── */}
+      <div className="bg-white border border-outline-variant rounded-xl overflow-hidden">
+        <div className="flex justify-between items-center px-6 py-4 border-b border-outline-variant">
+          <h3 className="text-base font-bold text-primary">Live Production Flow</h3>
+          <div className="flex gap-5">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 bg-secondary rounded-full" />
+              <span className="text-xs text-on-surface-variant font-medium">Running</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 bg-outline-variant rounded-full" />
+              <span className="text-xs text-on-surface-variant font-medium">Idle</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-8 bg-surface-bright relative">
+          {/* connector line */}
+          <div className="absolute top-1/2 left-16 right-16 h-[2px] border-t-2 border-dashed border-secondary/40 -translate-y-1/2 z-0" />
+
+          <div className="flex justify-between items-center relative z-10 gap-4 overflow-x-auto">
+            {flowStations.map((station, idx) => {
+              const status = station.statusKey.reduce(
+                (found, key) => found || getWcStatus(key),
+                null
+              )
+              return (
+                <FlowStation key={idx} name={station.name} src={station.src} status={status} />
+              )
+            })}
+          </div>
+        </div>
       </div>
-
-      {/* Process Illustration */}
-      <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-        Live Production Flow
-      </h2>
-      <div className="bg-white rounded-2xl shadow-sm p-8 flex items-center justify-between overflow-x-auto">
-        <ProcessImage
-          name="Conveyor 1"
-          src={ImgConveyor1}
-          status={getWcStatus("Conveyor1") || getWcStatus("Conveyor 1")}
-        />
-        <div className="text-gray-300 text-xl w-8 h-8 flex-shrink-0 animate-pulse">➔</div>
-
-        <ProcessImage
-          name="Arm Robot"
-          src={ImgArmRobot}
-          status={getWcStatus("ArmRobot") || getWcStatus("Arm Robot")}
-        />
-        <div className="text-[#023881]/30 text-xl w-8 h-8 flex-shrink-0 animate-pulse">➔</div>
-
-        <ProcessImage
-          name="AGV Mobile"
-          src={ImgAGV}
-          status={getWcStatus("AGV") || getWcStatus("AGV")}
-        />
-        <div className="text-[#023881]/30 text-xl w-8 h-8 flex-shrink-0 animate-pulse">➔</div>
-
-        <ProcessImage
-          name="Conveyor2"
-          src={ImgConveyor2}
-          status={getWcStatus("Conveyor2") || getWcStatus("Conveyor 2")}
-        />
-        <div className="text-[#023881]/30 text-xl w-8 h-8 flex-shrink-0 animate-pulse">➔</div>
-
-        <ProcessImage
-          name="Robot Delta"
-          src={ImgDeltaRobot}
-          status={getWcStatus("Delta") || getWcStatus("delta")}
-        />
-      </div>
-
     </div>
   )
 }
 
-function ProcessImage({ name, src, status }) {
-  const isWorking = status === "RUNNING"
+/* ── Flow Station Component ── */
+function FlowStation({ name, src, status }) {
+  const isRunning = status === "RUNNING"
   return (
-    <div className="flex flex-col items-center space-y-3 min-w-[120px]">
-      <div
-        className={`relative transition-all duration-500 ease-in-out p-2 rounded-xl border-2 ${isWorking
-            ? "border-green-400 bg-green-50 shadow-[0_0_15px_rgba(34,197,94,0.6)] scale-110"
-            : "border-gray-100 bg-gray-50 opacity-60 grayscale-[50%]"
-          }`}
-      >
-        <img src={src} alt={name} className="w-24 h-24 object-contain" />
+    <div className="flex flex-col items-center min-w-[110px]">
+      <div className={`relative p-3 rounded-xl border-2 transition-all duration-500 ${
+        isRunning
+          ? "border-secondary bg-secondary/5 shadow-[0_0_16px_rgba(55,85,195,0.25)] scale-105"
+          : "border-outline-variant bg-surface-container-low opacity-60 grayscale-[40%]"
+      }`}>
+        <img src={src} alt={name} className="w-20 h-20 object-contain" />
 
-        {/* Glow indicator dot */}
-        {isWorking && (
-          <span className="absolute -top-2 -right-2 flex h-4 w-4">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-4 w-4 bg-green-500 border-2 border-white"></span>
+        {/* Active dot */}
+        {isRunning && (
+          <span className="absolute -top-1.5 -right-1.5 flex h-3.5 w-3.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-60" />
+            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-secondary border-2 border-white" />
           </span>
         )}
       </div>
-
-      <div className="text-center mt-4">
-        <p className={`font-semibold ${isWorking ? "text-green-600" : "text-gray-700"}`}>
-          {name}
-        </p>
-        <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mt-1">
-          {status}
-        </p>
-      </div>
+      <p className={`mt-3 text-xs font-bold text-center ${isRunning ? "text-primary" : "text-on-surface-variant"}`}>
+        {name}
+      </p>
+      <span className={`mt-1 text-[9px] uppercase tracking-widest font-bold px-2 py-0.5 rounded-full ${
+        isRunning
+          ? "bg-secondary/10 text-secondary"
+          : "bg-outline-variant/30 text-outline"
+      }`}>
+        {status}
+      </span>
     </div>
   )
 }

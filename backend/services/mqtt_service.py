@@ -2,7 +2,7 @@ import json
 import asyncio
 import paho.mqtt.client as mqtt
 
-from services.db_service import insert_mqtt_log, insert_production
+from services.db_service import insert_mqtt_log, insert_production, finish_mo
 from core import state
 from core.state import *
 from services.oee_service import calculate_oee
@@ -100,6 +100,7 @@ def on_message(client, userdata, msg):
                 print("🎯 Target reached → closing MO")
 
                 state.odoo.mark_mo_done(state.current_mo_id)
+                finish_mo(state.current_mo_id)
                 
     production_state["target"] = state.production_target
     production_state["progress"] = state.produced_count

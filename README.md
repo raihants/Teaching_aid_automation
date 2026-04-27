@@ -109,3 +109,4 @@ npm run dev
 3. The **`dummy_production.py`** script wakes up, receives the start command, and begins simulating production, publishing machine statuses, cycle times, and product completions to `mes/wc/[workcenter]` and `mes/product`.
 4. The backend listens to these MQTT events and pipes them through a **WebSocket** directly to the **React Frontend**.
 5. The frontend displays the active production line vividly, updating progress bars, charts, and machine states in real-time.
+git 

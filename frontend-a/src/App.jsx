@@ -1,21 +1,31 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import Dashboard from "./pages/Dashboard"
 import History from "./pages/History"
-import Navbar from "./components/Navbar" // 🔥 tambahin ini
+import Sidebar from "./components/Sidebar"
+import TopBar from "./components/TopBar"
 
 function App() {
   return (
     <Router>
+      <div className="flex h-full w-full bg-background text-on-background overflow-hidden">
 
-      {/* 🔥 Navbar global */}
-      <Navbar />
+        {/* Sidebar – hidden on mobile */}
+        <div className="hidden md:block shrink-0">
+          <Sidebar />
+        </div>
 
-      {/* 🔽 Halaman */}
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/history" element={<History />} />
-      </Routes>
+        {/* Right column: TopBar + scrollable page */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <TopBar />
+          <main className="flex-1 overflow-y-auto">
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/history" element={<History />} />
+            </Routes>
+          </main>
+        </div>
 
+      </div>
     </Router>
   )
 }

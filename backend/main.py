@@ -13,6 +13,7 @@ from routes.api import router
 from ws.ws_manager import manager
 from services.mqtt_service import start_mqtt, publish
 from services.odoo_service import OdooService
+from services.db_service import create_mo, finish_mo
 
 load_dotenv()
 
@@ -53,14 +54,23 @@ def odoo_listener():
         mo = state.odoo.get_active_mo()
 
         if mo and mo["id"] != state.current_mo_id:
-            state.current_mo_id = mo["id"]
+            print(f"🆕 New MO detected: {mo['name']} (was {state.current_mo_id})")
 
+            # ── Reset all state before starting the new MO ──
+            state.reset_state()
+
+            state.current_mo_id = mo["id"]
             state.production_target = int(mo.get("product_qty", 10))
+
+            # Sync target into production_state for WebSocket broadcast
+            state.production_state["target"] = state.production_target
 
             print(f"🔥 Start MO {mo['name']} target={state.production_target}")
 
             publish("mes/target", {"target": state.production_target})
             publish("mes/control", {"command": "start"})
+
+            create_mo(mo["id"])
 
         time.sleep(5)
         

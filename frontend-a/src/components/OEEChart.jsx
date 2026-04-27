@@ -69,7 +69,7 @@ export default function OEEChart({ production }) {
     oee: oee.oee || 0
   }]
 
-  const wcData = Object.entries(production.oee_wc || {}).map(([name,val]) => ({
+  const wcData = Object.entries(production.oee_wc || {}).map(([name, val]) => ({
     name,
     oee: val.oee
   }))
@@ -90,18 +90,6 @@ export default function OEEChart({ production }) {
           <Bar dataKey="oee" fill="#111827" />
         </BarChart>
       </ResponsiveContainer>
-
-      <h2 className="text-gray-500 text-xl font-semibold mt-10 mb-4">OEE per Station</h2>
-      <ResponsiveContainer width="100%" height={300}>
-        <BarChart data={wcData}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Tooltip formatter={(value)=>`${value}%`} />
-          <Bar dataKey="oee" fill="#6366f1" />
-        </BarChart>
-      </ResponsiveContainer>
-
     </div>
   )
 }

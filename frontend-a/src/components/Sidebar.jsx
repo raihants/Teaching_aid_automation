@@ -1,4 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom"
+import logo from "../assets/logopolman.svg"
 
 const navItems = [
   { label: "Assembly Line A", icon: "precision_manufacturing", to: "/" },
@@ -21,11 +22,8 @@ export default function Sidebar() {
       {/* Header */}
       <div className="px-6 pb-6 border-b border-slate-200 mb-6">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-primary-container rounded-lg flex items-center justify-center shrink-0">
-            <span className="material-symbols-outlined text-white text-[22px]"
-              style={{ fontVariationSettings: "'FILL' 1" }}>
-              factory
-            </span>
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0">
+            <img src={logo} alt="Logo" />
           </div>
           <div>
             <h1 className="text-primary font-bold text-sm tracking-normal">Main Plant</h1>
@@ -46,11 +44,10 @@ export default function Sidebar() {
             <NavLink
               key={item.label}
               to={item.to}
-              className={`cursor-pointer select-none flex items-center gap-3 px-4 py-3 rounded-l text-sm font-semibold transition-all duration-200 ${
-                isActive
-                  ? "bg-slate-100 text-primary border-r-4 border-primary"
-                  : "text-slate-500 hover:bg-slate-50 hover:text-primary"
-              }`}
+              className={`cursor-pointer select-none flex items-center gap-3 px-4 py-3 rounded-l text-sm font-semibold transition-all duration-200 ${isActive
+                ? "bg-slate-100 text-primary border-r-4 border-primary"
+                : "text-slate-500 hover:bg-slate-50 hover:text-primary"
+                }`}
             >
               <span className="material-symbols-outlined text-[20px]"
                 style={isActive ? { fontVariationSettings: "'FILL' 1" } : {}}>
@@ -70,11 +67,10 @@ export default function Sidebar() {
             <NavLink
               key={item.label}
               to={item.to}
-              className={`cursor-pointer select-none flex items-center gap-3 px-4 py-2.5 rounded-l text-sm font-semibold transition-all duration-200 ${
-                isActive
-                  ? "bg-slate-100 text-primary border-r-4 border-primary"
-                  : "text-slate-500 hover:bg-slate-50 hover:text-primary"
-              }`}
+              className={`cursor-pointer select-none flex items-center gap-3 px-4 py-2.5 rounded-l text-sm font-semibold transition-all duration-200 ${isActive
+                ? "bg-slate-100 text-primary border-r-4 border-primary"
+                : "text-slate-500 hover:bg-slate-50 hover:text-primary"
+                }`}
             >
               <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
               <span>{item.label}</span>

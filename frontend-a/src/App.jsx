@@ -3,9 +3,11 @@ import Dashboard from "./pages/Dashboard"
 import History from "./pages/History"
 import Sidebar from "./components/Sidebar"
 import TopBar from "./components/TopBar"
+import { DarkModeProvider } from "./context/DarkModeContext"
 
 function App() {
   return (
+    <DarkModeProvider>
     <Router>
       <div className="flex h-full w-full bg-background text-on-background overflow-hidden">
 
@@ -27,6 +29,7 @@ function App() {
 
       </div>
     </Router>
+    </DarkModeProvider>
   )
 }
 

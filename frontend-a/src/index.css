@@ -90,3 +90,53 @@ body {
 .status-stop {
   @apply bg-red-100 text-red-700 border border-red-200;
 }
+
+/* ===== Dark Mode ===== */
+.dark body {
+  background-color: #0f172a;
+  color: #e2e8f0;
+}
+
+.dark ::-webkit-scrollbar-track  { background: #1e293b; }
+.dark ::-webkit-scrollbar-thumb  { background: #475569; }
+
+/* Backgrounds */
+.dark .bg-white,
+.dark .bg-background,
+.dark .bg-surface,
+.dark .bg-surface-bright,
+.dark .bg-surface-container-lowest { background-color: #1e293b !important; }
+
+.dark .bg-surface-container-low    { background-color: #1e293b !important; }
+.dark .bg-surface-container        { background-color: #273344 !important; }
+.dark .bg-surface-container-high   { background-color: #334155 !important; }
+.dark .bg-surface-container-highest{ background-color: #3b4f66 !important; }
+
+/* Text */
+.dark .text-on-surface,
+.dark .text-on-background          { color: #e2e8f0 !important; }
+.dark .text-on-surface-variant     { color: #94a3b8 !important; }
+.dark .text-primary                { color: #93c5fd !important; }
+.dark .text-secondary              { color: #818cf8 !important; }
+.dark .text-outline                { color: #64748b !important; }
+.dark .text-slate-500              { color: #94a3b8 !important; }
+
+/* Borders */
+.dark .border-outline-variant,
+.dark .border-slate-200            { border-color: #334155 !important; }
+
+/* Sidebar + TopBar */
+.dark aside,
+.dark header                       { background-color: #1e293b !important; border-color: #334155 !important; }
+.dark .hover\:bg-slate-50:hover,
+.dark .hover\:bg-slate-100:hover   { background-color: #273344 !important; }
+.dark .bg-slate-100                { background-color: #273344 !important; }
+
+/* Tables */
+.dark table thead tr               { background-color: #1e3a5f !important; }
+.dark .hover\:bg-surface-container-low:hover { background-color: #273344 !important; }
+.dark .bg-surface-bright           { background-color: #1e293b !important; }
+
+/* Cards / KPI */
+.dark .bg-primary-container        { background-color: #1e3a5f !important; }
+.dark .text-on-primary             { color: #93c5fd !important; }

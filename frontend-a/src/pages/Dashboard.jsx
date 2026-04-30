@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react"
+import { useAuth } from "../context/AuthContext"
+import { Play, Square, RotateCcw, ShieldAlert } from "lucide-react"
 import WorkcenterCard from "../components/WorkcenterCard"
 import KPICard from "../components/KPICard"
 import ImgConveyor1 from "../assets/Robot Images/Conveyor1.png"
@@ -12,9 +14,42 @@ import toast, { Toaster } from "react-hot-toast"
 
 export default function Dashboard() {
   const host = import.meta.env.VITE_BACK_HOST
+  const { user } = useAuth()
 
   const [targetReached, setTargetReached] = useState(false)
   const [showOEEChart, setShowOEEChart] = useState(false)
+  const [isControlLoading, setIsControlLoading] = useState(false)
+
+  const isViewer = user?.role === 'viewer'
+
+  const handleControl = async (command) => {
+    if (isViewer) {
+      toast.error("You don't have permission to control the machine")
+      return
+    }
+
+    setIsControlLoading(true)
+    const token = localStorage.getItem('token')
+    const backendUrl = host.includes(':') ? `http://${host}` : `http://${host}:8000`
+
+    try {
+      const response = await fetch(`${backendUrl}/control?command=${command}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+
+      if (!response.ok) throw new Error('Failed to send command')
+      
+      toast.success(`Machine command "${command}" sent`, {
+        icon: '🚀',
+        style: { borderRadius: '10px', background: '#001f51', color: '#fff' }
+      })
+    } catch (error) {
+      toast.error(error.message)
+    } finally {
+      setIsControlLoading(false)
+    }
+  }
 
   const [production, setProduction] = useState({
     total: 0,
@@ -108,6 +143,49 @@ export default function Dashboard() {
           target={production.target || 0}
           label="Collected"
         />
+      </div>
+
+      {/* ── Control Panel (Admin/Operator Only) ── */}
+      <div className="bg-white border border-outline-variant rounded-xl p-6 mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h3 className="text-base font-bold text-primary flex items-center gap-2 uppercase tracking-wide">
+              Machine Control
+            </h3>
+            <p className="text-[11px] text-on-surface-variant font-medium mt-1">Manual override and station synchronization</p>
+          </div>
+
+          {isViewer ? (
+            <div className="flex items-center gap-3 px-4 py-2 bg-surface-container-low border border-outline-variant rounded-lg text-on-surface-variant italic text-xs">
+              <ShieldAlert size={16} className="text-outline" />
+              Monitoring mode only (Read-only access)
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-3 w-full sm:w-auto">
+              <button 
+                onClick={() => handleControl('start')}
+                disabled={isControlLoading}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-success text-white px-6 py-2.5 rounded-xl font-bold text-xs hover:bg-success/90 transition-all active:scale-95 disabled:opacity-50"
+              >
+                <Play size={14} fill="currentColor" /> START
+              </button>
+              <button 
+                onClick={() => handleControl('stop')}
+                disabled={isControlLoading}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-error text-white px-6 py-2.5 rounded-xl font-bold text-xs hover:bg-error/90 transition-all active:scale-95 disabled:opacity-50"
+              >
+                <Square size={14} fill="currentColor" /> STOP
+              </button>
+              <button 
+                onClick={() => handleControl('reset')}
+                disabled={isControlLoading}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-surface-container-highest text-primary border border-outline-variant px-6 py-2.5 rounded-xl font-bold text-xs hover:bg-surface-variant transition-all active:scale-95 disabled:opacity-50"
+              >
+                <RotateCcw size={14} /> RESET
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── KPI Cards ── */}

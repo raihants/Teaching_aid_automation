@@ -1,6 +1,7 @@
 import json
 import asyncio
 import paho.mqtt.client as mqtt
+from paho.mqtt.client import CallbackAPIVersion
 
 from services.db_service import insert_mqtt_log, insert_production, finish_mo
 from core import state
@@ -13,15 +14,18 @@ import os
 
 load_dotenv()
 
-BROKER = os.getenv("MQTT_BROKER")
-PORT = int(os.getenv("MQTT_PORT"))
+BROKER = os.getenv("MQTT_BROKER", "localhost")
+PORT = int(os.getenv("MQTT_PORT", "1883"))
 
-mqtt_client = mqtt.Client()
-main_loop = asyncio.get_event_loop()
+mqtt_client = mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION1)
+main_loop = None
 
 def on_connect(client, userdata, flags, rc):
-    print("Connected to MQTT")
-    client.subscribe("mes/#")
+    if rc == 0:
+        print("[OK] Connected to MQTT")
+        client.subscribe("mes/#")
+    else:
+        print(f"[ERROR] MQTT Connection failed with code {rc}")
 
 def on_message(client, userdata, msg):
     payload = json.loads(msg.payload.decode())
@@ -32,19 +36,17 @@ def on_message(client, userdata, msg):
     # inject ke payload
     payload["timestamp"] = server_time.isoformat()
     
-    # print(f"MQTT Received: {topic} -> {payload}")
-    
     if topic.startswith('mes/wc/'):
         
         if payload["status"] == "start" and payload["workcenter"] == "Conveyor1":
             if state.start_time is None:
                 state.start_time = datetime.now()
-                print("⏱️ REAL Production Start:", state.start_time)
+                print("[TIMER] REAL Production Start:", state.start_time)
         
         try:
             insert_mqtt_log(topic, payload)
         except Exception as e:
-            print("❌ DB Log Error:", e)
+            print("[ERROR] DB Log Error:", e)
         
         wc = payload.get("workcenter")
         
@@ -85,33 +87,49 @@ def on_message(client, userdata, msg):
                 insert_production(payload, state.current_mo_id)
                 print(payload)
             except Exception as e:
-                print("❌ Insert Production Error:", e)
+                print("[ERROR] Insert Production Error:", e)
 
             if payload.get("result") == "ok":
                 state.produced_count += 1
 
                 # update progress ke Odoo
-                state.odoo.update_production_qty(state.current_mo_id, state.produced_count)
+                if state.odoo:
+                    state.odoo.update_production_qty(state.current_mo_id, state.produced_count)
 
-                print(f"📈 Progress sent to Odoo: {state.produced_count}")
+                print(f"[PROGRESS] Progress sent to Odoo: {state.produced_count}")
 
             # cek apakah sudah selesai
             if state.produced_count >= state.production_target:
-                print("🎯 Target reached → closing MO")
+                print("[TARGET] Target reached -> closing MO")
 
-                state.odoo.mark_mo_done(state.current_mo_id)
+                if state.odoo:
+                    state.odoo.mark_mo_done(state.current_mo_id)
                 finish_mo(state.current_mo_id)
                 
     production_state["target"] = state.production_target
     production_state["progress"] = state.produced_count
 
-    asyncio.run_coroutine_threadsafe(manager.broadcast(production_state), main_loop)
+    if main_loop:
+        asyncio.run_coroutine_threadsafe(manager.broadcast(production_state), main_loop)
     
 def start_mqtt():
+    global main_loop
+    try:
+        main_loop = asyncio.get_event_loop()
+    except RuntimeError:
+        main_loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(main_loop)
+    
     mqtt_client.on_connect = on_connect
     mqtt_client.on_message = on_message
-    mqtt_client.connect(BROKER, PORT, 60)
-    mqtt_client.loop_start()
+    
+    try:
+        mqtt_client.connect(BROKER, PORT, 60)
+        mqtt_client.loop_start()
+        print(f"[MQTT] Connecting to {BROKER}:{PORT}...")
+    except Exception as e:
+        print(f"[WARN] MQTT Broker not available ({BROKER}:{PORT}): {e}")
+        print("   Backend will run without MQTT. Start broker and restart to enable.")
     
 
 def publish(topic, payload):
@@ -119,4 +137,4 @@ def publish(topic, payload):
         mqtt_client.publish(topic, json.dumps(payload))
         print(f"[MQTT SEND] {topic} -> {payload}")
     except Exception as e:
-        print("❌ MQTT Publish Error:", e)
+        print("[ERROR] MQTT Publish Error:", e)

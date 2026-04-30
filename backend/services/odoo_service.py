@@ -19,7 +19,7 @@ class OdooService:
     # =============================
     def connect(self):
         try:
-            print("🔄 Connecting to Odoo...")
+            print("[ODOO] Connecting to Odoo...")
 
             common = xmlrpc.client.ServerProxy(f"{self.url}/xmlrpc/2/common")
 
@@ -31,20 +31,20 @@ class OdooService:
             )
 
             if not self.uid:
-                print("❌ Login Failed (username/password/db salah)")
+                print("[ERROR] Login Failed (username/password/db salah)")
                 return False
 
-            print("✅ Connected to Odoo")
-            print(f"👤 UID: {self.uid}")
+            print("[OK] Connected to Odoo")
+            print(f"[USER] UID: {self.uid}")
 
             return True
 
         except socket.error:
-            print("❌ Connection Failed (server mati / URL salah)")
+            print("[ERROR] Connection Failed (server mati / URL salah)")
             return False
 
         except Exception as e:
-            print("❌ Unknown Error:", e)
+            print("[ERROR] Unknown Error:", e)
             return False
 
     # =============================
@@ -70,7 +70,7 @@ class OdooService:
             )
 
         except Exception as e:
-            print(f"❌ Odoo Error ({model}.{method}):", e)
+            print(f"[ERROR] Odoo Error ({model}.{method}):", e)
 
             # coba reconnect
             if self.connect():
@@ -86,7 +86,7 @@ class OdooService:
                         kwargs
                     )
                 except Exception as e2:
-                    print("❌ Retry Failed:", e2)
+                    print("[ERROR] Retry Failed:", e2)
 
             return None
 
@@ -102,12 +102,12 @@ class OdooService:
         )
 
         if not result:
-            print("ℹ No active Manufacturing Order")
+            print("[INFO] No active Manufacturing Order")
             return None
 
         mo = result[0]
 
-        print(f"✅ Active MO: {mo['name']} | Target: {mo['product_qty']}")
+        print(f"[OK] Active MO: {mo['name']} | Target: {mo['product_qty']}")
 
         return mo
 
@@ -122,7 +122,7 @@ class OdooService:
         )
 
         if result:
-            print(f"📦 Updated qty_produced = {qty_done}")
+            print(f"[UPDATE] Updated qty_produced = {qty_done}")
 
     # =============================
     # MARK DONE
@@ -135,4 +135,4 @@ class OdooService:
         )
 
         if result is not None:
-            print("✅ MO marked as DONE")
+            print("[OK] MO marked as DONE")

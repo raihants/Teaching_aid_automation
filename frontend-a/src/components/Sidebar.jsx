@@ -1,5 +1,7 @@
-import { NavLink, useLocation } from "react-router-dom"
+import { NavLink, useLocation, useNavigate } from "react-router-dom"
 import logo from "../assets/logopolman.svg"
+import { useAuth } from "../context/AuthContext"
+import { LogOut, User as UserIcon, Settings } from "lucide-react"
 
 const navItems = [
   { label: "Assembly Line A", icon: "precision_manufacturing", to: "/" },
@@ -16,6 +18,13 @@ const footerItems = [
 
 export default function Sidebar() {
   const location = useLocation()
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    logout()
+    navigate("/login")
+  }
 
   return (
     <aside className="bg-white text-blue-900 font-sans h-screen w-64 border-r border-slate-200 flex flex-col py-6 shrink-0 sticky top-0 z-40">
@@ -57,10 +66,40 @@ export default function Sidebar() {
             </NavLink>
           )
         })}
+
+        {user?.role === 'admin' && (
+          <NavLink
+            to="/users"
+            className={({ isActive }) => `cursor-pointer select-none flex items-center gap-3 px-4 py-3 rounded-l text-sm font-semibold transition-all duration-200 ${isActive
+              ? "bg-slate-100 text-primary border-r-4 border-primary"
+              : "text-slate-500 hover:bg-slate-50 hover:text-primary"
+              }`}
+          >
+            <Settings className="w-5 h-5" />
+            <span>User Management</span>
+          </NavLink>
+        )}
       </nav>
 
-      {/* Footer */}
+      {/* User & Footer */}
       <div className="px-4 mt-auto border-t border-slate-200 pt-4 space-y-1">
+        <div className="flex items-center gap-3 px-4 py-3 mb-2 bg-surface-container-low rounded-xl border border-outline-variant">
+          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary">
+            <UserIcon size={16} />
+          </div>
+          <div className="flex-1 overflow-hidden">
+            <p className="text-xs font-bold text-primary truncate">{user?.username}</p>
+            <p className="text-[10px] text-slate-500 uppercase font-semibold">{user?.role}</p>
+          </div>
+          <button 
+            onClick={handleLogout}
+            className="p-1.5 text-slate-400 hover:text-error hover:bg-error/10 rounded-lg transition-colors"
+            title="Logout"
+          >
+            <LogOut size={16} />
+          </button>
+        </div>
+
         {footerItems.map(item => {
           const isActive = item.to !== "#" && location.pathname === item.to
           return (

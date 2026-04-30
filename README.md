@@ -97,7 +97,7 @@ python dummy_production.py
 ### 3. Frontend Setup (React)
 Navigate to the frontend directory:
 ```bash
-cd frontend-a
+cd frontend
 npm install
 npm run dev
 ```

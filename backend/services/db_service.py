@@ -6,11 +6,11 @@ from datetime import datetime
 
 load_dotenv()
 
-DB_HOST = os.getenv("DB_HOST")
-DB_PORT = int(os.getenv("DB_PORT"))
-DB_NAME = os.getenv("DB_NAME")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = int(os.getenv("DB_PORT", "5432"))
+DB_NAME = os.getenv("DB_NAME", "teaching_aid")
+DB_USER = os.getenv("DB_USER", "postgres")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 
 def get_connection():
     return psycopg2.connect(
@@ -43,7 +43,7 @@ def insert_production(data, mo_id):
     
     except Exception as e:
         conn.rollback()
-        print("❌ DB Insert Error:", e)
+        print("[ERROR] DB Insert Error:", e)
     
     finally:
         cursor.close()
@@ -73,7 +73,7 @@ def insert_mqtt_log(topic, payload):
         
     except Exception as e:
         conn.rollback()
-        print("❌ DB Insert Log Error:", e)
+        print("[ERROR] DB Insert Log Error:", e)
     
     finally:
         cursor.close()
@@ -246,7 +246,7 @@ def get_mo_detail(mo_id):
         }
 
     except Exception as e:
-        print("❌ get_mo_detail error:", e)
+        print("[ERROR] get_mo_detail error:", e)
         return None
 
     finally:
@@ -282,7 +282,7 @@ def get_mo_history(mo_id=None, search=None, result_filter=None, limit=50):
         ]
 
     except Exception as e:
-        print("❌ get_mo_history error:", e)
+        print("[ERROR] get_mo_history error:", e)
         return []
 
     finally:

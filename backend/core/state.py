@@ -45,4 +45,4 @@ def reset_state():
     _s.production_state["progress"] = 0
     # "target" will be updated by the caller right after reset
 
-    print("🔄 State reset for new MO")
+    print("[RESET] State reset for new MO")

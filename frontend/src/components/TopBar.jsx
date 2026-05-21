@@ -16,7 +16,7 @@ export default function TopBar() {
   const [time, setTime]           = useState("")
   const [notifOpen, setNotifOpen] = useState(false)
   const [notifs, setNotifs]       = useState([])
-  const [notifLoading, setNotifLoading] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
 
   const notifRef = useRef(null)
 
@@ -39,17 +39,22 @@ export default function TopBar() {
     return () => document.removeEventListener("mousedown", handler)
   }, [])
 
-  /* ── Fetch notifications (latest workcenter events) ── */
+  /* ── Listen for local notifications (e.g. from Dashboard target achieved) ── */
+  useEffect(() => {
+    const handleAddNotif = (e) => {
+      setNotifs(prev => [e.detail, ...prev])
+      setUnreadCount(prev => prev + 1)
+    }
+    window.addEventListener('addNotification', handleAddNotif)
+    return () => window.removeEventListener('addNotification', handleAddNotif)
+  }, [])
+
+  /* ── Toggle notifications panel ── */
   const openNotifications = () => {
     const next = !notifOpen
     setNotifOpen(next)
-    if (next && notifs.length === 0) {
-      setNotifLoading(true)
-      fetch(`http://${host}:8000/history?limit=15`)
-        .then(r => r.json())
-        .then(r => setNotifs(r.data ?? []))
-        .catch(() => setNotifs([]))
-        .finally(() => setNotifLoading(false))
+    if (next) {
+      setUnreadCount(0)
     }
   }
 
@@ -59,8 +64,6 @@ export default function TopBar() {
     const d = new Date(t)
     return isNaN(d) ? t : d.toLocaleTimeString()
   }
-
-  const ngCount = notifs.filter(n => n.result === "ng").length
 
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-50 flex justify-between items-center px-4 sm:px-8 h-14 md:h-16 shrink-0 transition-colors duration-300">
@@ -111,8 +114,10 @@ export default function TopBar() {
               title="Notifications"
             >
               <span className="material-symbols-outlined text-[20px]">notifications</span>
-              {ngCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full text-[8px] flex items-center justify-center text-white font-bold" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 px-1 bg-error rounded-full text-[10px] flex items-center justify-center text-white font-bold">
+                  {unreadCount}
+                </span>
               )}
             </button>
 
@@ -123,47 +128,33 @@ export default function TopBar() {
                 <div className="flex justify-between items-center px-4 py-3 border-b border-outline-variant">
                   <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-primary text-[16px]">notifications</span>
-                    <h3 className="text-sm font-bold text-primary">Activity Log</h3>
+                    <h3 className="text-sm font-bold text-primary">System Alerts</h3>
                   </div>
                   <span className="text-[10px] text-on-surface-variant font-semibold uppercase tracking-widest">
-                    Last {notifs.length}
+                    {notifs.length} records
                   </span>
                 </div>
 
                 {/* Items */}
                 <div className="max-h-80 overflow-y-auto divide-y divide-outline-variant">
-                  {notifLoading ? (
-                    <div className="flex items-center justify-center py-8 text-on-surface-variant text-sm gap-2">
-                      <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
-                      Loading…
-                    </div>
-                  ) : notifs.length === 0 ? (
-                    <div className="py-8 text-center text-on-surface-variant text-sm">No activity.</div>
+                  {notifs.length === 0 ? (
+                    <div className="py-8 text-center text-on-surface-variant text-sm">No new alerts.</div>
                   ) : notifs.map((n, i) => {
-                    const isNG = n.result === "ng"
-                    const isDone = n.status === "done" || n.status === "end"
                     return (
-                      <div key={i} className={`px-4 py-3 flex items-start gap-3 hover:bg-surface-container-low transition-colors ${isNG ? "bg-red-50" : ""}`}>
-                        <div className={`mt-0.5 w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
-                          isNG ? "bg-error-container" : isDone ? "bg-green-100" : "bg-surface-container"
-                        }`}>
-                          <span className={`material-symbols-outlined text-[14px] ${
-                            isNG ? "text-error" : isDone ? "text-green-700" : "text-outline"
-                          }`} style={{ fontVariationSettings: "'FILL' 1" }}>
-                            {isNG ? "warning" : isDone ? "check_circle" : "autorenew"}
+                      <div key={i} className="px-4 py-3 flex items-start gap-3 hover:bg-surface-container-low transition-colors">
+                        <div className="mt-0.5 w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-primary-container">
+                          <span className="material-symbols-outlined text-[16px] text-on-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
+                            emoji_events
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold text-on-surface truncate">{n.workcenter}</p>
-                          <p className="text-[11px] text-on-surface-variant">
-                            Product <span className="font-mono text-primary">{n.product_id}</span>
-                            {n.result && (
-                              <span className={`ml-1 font-bold ${isNG ? "text-error" : "text-secondary"}`}>
-                                → {n.result?.toUpperCase()}
-                              </span>
-                            )}
+                          <p className="text-sm font-bold text-primary truncate">{n.title}</p>
+                          <p className="text-[12px] text-on-surface mt-0.5 leading-snug">
+                            {n.message}
                           </p>
-                          <p className="text-[10px] text-outline mt-0.5">{fmtTime(n.timestamp)}</p>
+                          <p className="text-[10px] text-outline mt-1 font-semibold tracking-wide">
+                            {fmtTime(n.timestamp)}
+                          </p>
                         </div>
                       </div>
                     )
@@ -173,10 +164,10 @@ export default function TopBar() {
                 {/* Footer */}
                 <div className="px-4 py-2 border-t border-outline-variant bg-surface-container-low text-center">
                   <button
-                    onClick={() => { setNotifOpen(false); setNotifs([]) }}
-                    className="text-[11px] font-semibold text-primary hover:underline"
+                    onClick={() => { setNotifOpen(false); setNotifs([]); setUnreadCount(0); }}
+                    className="text-[11px] font-bold text-primary hover:underline uppercase tracking-widest"
                   >
-                    Clear & close
+                    Clear All
                   </button>
                 </div>
               </div>

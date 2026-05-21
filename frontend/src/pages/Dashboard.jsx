@@ -46,6 +46,15 @@ export default function Dashboard() {
         style: { background: "#001f51", color: "#fff", fontWeight: "600" }
       })
       setTargetReached(true)
+
+      // Emit event for TopBar notification bell
+      window.dispatchEvent(new CustomEvent('addNotification', {
+        detail: {
+          title: "Target Achieved",
+          message: `Production target of ${production.target} units has been successfully reached.`,
+          timestamp: new Date().toISOString()
+        }
+      }))
     }
   }, [production.progress, production.target, targetReached])
 

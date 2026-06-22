@@ -4,11 +4,7 @@ import { useAuth } from "../context/AuthContext"
 import { LogOut, User as UserIcon, Settings } from "lucide-react"
 
 const navItems = [
-  { label: "Assembly Line A", icon: "precision_manufacturing", to: "/" },
-  { label: "Assembly Line B", icon: "factory", to: "#" },
-  { label: "Quality Control", icon: "verified_user", to: "#" },
-  { label: "Storage Hub", icon: "inventory_2", to: "#" },
-  { label: "Power Grid", icon: "bolt", to: "#" },
+  { label: "Assembly Line", icon: "precision_manufacturing", to: "/" },
 ]
 
 const footerItems = [

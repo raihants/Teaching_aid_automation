@@ -11,8 +11,11 @@ async def control_machine(command: str, token: str = Depends(oauth2_scheme)):
     if not payload or payload.get("role") not in ["admin", "operator"]:
         raise HTTPException(status_code=403, detail="Viewer cannot control the machine")
     
-    # Send command to MQTT
-    publish("mes/control", {"command": command})
+    # MQTT topic
+    topic = f"factory/control/{command}"
+
+    # publish MQTT
+    publish(topic, "1")
     return {"status": "success", "command": command}
 
 @router.get("/")

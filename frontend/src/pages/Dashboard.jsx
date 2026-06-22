@@ -125,7 +125,7 @@ export default function Dashboard() {
       {/* ── Page Header ── */}
       <div className="flex justify-between items-end mb-8">
         <div>
-          <h2 className="text-headline-xl font-bold text-primary tracking-tight">Assembly Line A</h2>
+          <h2 className="text-headline-xl font-bold text-primary tracking-tight">Assembly Line</h2>
           <p className="text-on-surface-variant mt-1 text-sm">Real-time production metrics and component flow tracking.</p>
         </div>
         <div className="flex items-center gap-3">
@@ -184,13 +184,6 @@ export default function Dashboard() {
                 className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-error text-white px-6 py-2.5 rounded-xl font-bold text-xs hover:bg-error/90 transition-all active:scale-95 disabled:opacity-50"
               >
                 <Square size={14} fill="currentColor" /> STOP
-              </button>
-              <button 
-                onClick={() => handleControl('reset')}
-                disabled={isControlLoading}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-surface-container-highest text-primary border border-outline-variant px-6 py-2.5 rounded-xl font-bold text-xs hover:bg-surface-variant transition-all active:scale-95 disabled:opacity-50"
-              >
-                <RotateCcw size={14} /> RESET
               </button>
             </div>
           )}

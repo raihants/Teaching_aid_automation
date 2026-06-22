@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+python-dotenv
+psycopg2
+paho-mqtt
+websockets
+bcrypt
+python-jose
+python-multipart

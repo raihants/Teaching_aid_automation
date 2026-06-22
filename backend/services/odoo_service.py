@@ -1,6 +1,7 @@
 import xmlrpc.client
 import socket
 
+
 class OdooService:
     def __init__(self, url, db, username, password):
         self.url = url
@@ -9,19 +10,20 @@ class OdooService:
         self.password = password
 
         self.uid = None
-        self.models = None
         self.last_mo_id = None
 
         self.connect()
 
+    # =============================
+    # CONNECT
+    # =============================
     def connect(self):
         try:
-            print("🔄 Connecting to Odoo...")
+            print("[ODOO] Connecting to Odoo...")
 
-            self.common = xmlrpc.client.ServerProxy(f"{self.url}/xmlrpc/2/common")
+            common = xmlrpc.client.ServerProxy(f"{self.url}/xmlrpc/2/common")
 
-            # AUTHENTICATION
-            self.uid = self.common.authenticate(
+            self.uid = common.authenticate(
                 self.db,
                 self.username,
                 self.password,
@@ -29,58 +31,108 @@ class OdooService:
             )
 
             if not self.uid:
-                print("❌ Odoo Login Failed: Username / Password / DB salah")
-                return
+                print("[ERROR] Login Failed (username/password/db salah)")
+                return False
 
-            self.models = xmlrpc.client.ServerProxy(f"{self.url}/xmlrpc/2/object")
+            print("[OK] Connected to Odoo")
+            print(f"[USER] UID: {self.uid}")
 
-            print("✅ Odoo Connected Successfully")
-            print(f"👤 UID: {self.uid}")
+            return True
 
         except socket.error:
-            print("❌ Odoo Connection Failed: Server tidak aktif / URL salah")
+            print("[ERROR] Connection Failed (server mati / URL salah)")
+            return False
 
         except Exception as e:
-            print("❌ Odoo Unknown Error:", e)
+            print("[ERROR] Unknown Error:", e)
+            return False
 
-    def get_active_mo(self):
-        mos = self.models.execute_kw(
-            self.db, self.uid, self.password,
-            'mrp.production', 'search_read',
-            [[['state', 'in', ['confirmed', 'progress']]]],
-            {'fields': ['id', 'name', 'product_qty']}
-        )
+    # =============================
+    # SAFE EXECUTE
+    # =============================
+    def execute(self, model, method, args=None, kwargs=None):
+        if args is None:
+            args = []
+        if kwargs is None:
+            kwargs = {}
 
-        if not mos:
-            print("ℹ No active Manufacturing Order")
+        try:
+            models = xmlrpc.client.ServerProxy(f"{self.url}/xmlrpc/2/object")
+
+            return models.execute_kw(
+                self.db,
+                self.uid,
+                self.password,
+                model,
+                method,
+                args,
+                kwargs
+            )
+
+        except Exception as e:
+            print(f"[ERROR] Odoo Error ({model}.{method}):", e)
+
+            # coba reconnect
+            if self.connect():
+                try:
+                    models = xmlrpc.client.ServerProxy(f"{self.url}/xmlrpc/2/object")
+                    return models.execute_kw(
+                        self.db,
+                        self.uid,
+                        self.password,
+                        model,
+                        method,
+                        args,
+                        kwargs
+                    )
+                except Exception as e2:
+                    print("[ERROR] Retry Failed:", e2)
+
             return None
 
-        mo = mos[0]
+    # =============================
+    # GET ACTIVE MO
+    # =============================
+    def get_active_mo(self):
+        result = self.execute(
+            'mrp.production',
+            'search_read',
+            [[['state', 'in', ['progress']]]],
+            {'fields': ['id', 'name', 'product_qty', 'qty_produced']}
+        )
 
-        print(f"✅ Active MO: {mo['name']} | Target: {mo['product_qty']}")
+        if not result:
+            print("[INFO] No active Manufacturing Order")
+            return None
+
+        mo = result[0]
+
+        print(f"[OK] Active MO: {mo['name']} | Target: {mo['product_qty']}")
 
         return mo
-    
+
+    # =============================
+    # UPDATE QTY
+    # =============================
     def update_production_qty(self, mo_id, qty_done):
-        try:
-            self.models.execute_kw(
-                self.db, self.uid, self.password,
-                'mrp.production', 'write',
-                [[mo_id], {
-                    'qty_produced': qty_done
-                }]
-            )
-            print(f"📦 Updated qty_produced = {qty_done}")
-        except Exception as e:
-            print("❌ Failed update qty:", e)
-            
+        result = self.execute(
+            'mrp.production',
+            'write',
+            [[mo_id], {'qty_produced': qty_done}]
+        )
+
+        if result:
+            print(f"[UPDATE] Updated qty_produced = {qty_done}")
+
+    # =============================
+    # MARK DONE
+    # =============================
     def mark_mo_done(self, mo_id):
-        try:
-            self.models.execute_kw(
-                self.db, self.uid, self.password,
-                'mrp.production', 'button_mark_done',
-                [[mo_id]]
-            )
-            print("✅ MO marked as DONE in Odoo")
-        except Exception as e:
-            print("❌ Failed mark done:", e)
+        result = self.execute(
+            'mrp.production',
+            'button_mark_done',
+            [[mo_id]]
+        )
+
+        if result is not None:
+            print("[OK] MO marked as DONE")
